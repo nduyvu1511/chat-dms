@@ -25,6 +25,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
   async handleDisconnect(socket: Socket) {
     try {
+      console.log('new client disconnectd: ', socket.id)
       const user = await this.userService.removeSocket(socket.id)
       if (!user?.user_id) return
 
@@ -50,6 +51,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
   async handleConnection(socket: Socket) {
     const token = socket.handshake.headers.authorization?.split(' ')[1]
+    console.log('new client connectd: ', socket.id)
 
     try {
       const authUser = this.jwtService.verify(token, {
@@ -68,7 +70,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       users.forEach((item) => {
         if (!compareTwoObjectId(item.user_id, user._id) && item.socket_id) {
           const room_ids = item.room_joineds?.filter((rId) =>
-            user.room_joineds?.some((_id) => _id.toString() === rId.toString())
+            user.room_joineds?.some((_id) => compareTwoObjectId(_id, rId))
           )
 
           socket.to(item.socket_id).emit(WebsocketEmitEvents.FRIEND_LOGIN, {

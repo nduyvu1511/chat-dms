@@ -18,6 +18,8 @@ const AttachmentSchema = new Schema<Attachment>(
       type: Schema.Types.Date,
       default: Date.now,
     },
+    height: { type: Number, required: false, default: null },
+    width: { type: Number, required: false, default: null },
     updated_at: {
       type: Schema.Types.Date,
       default: Date.now,

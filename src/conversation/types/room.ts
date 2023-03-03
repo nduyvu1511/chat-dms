@@ -79,11 +79,6 @@ export type ToRoomListResponse = {
   current_user: User
 }
 
-export type RoomDetailRes = Omit<RoomRes, 'top_members'> & {
-  messages: ListRes<MessageRes[]>
-  members: ListRes<RoomMemberRes[]>
-}
-
 export type RoomDetailPopulate = Omit<
   Room,
   'members' | 'pinned_messages' | 'messages' | 'leader'

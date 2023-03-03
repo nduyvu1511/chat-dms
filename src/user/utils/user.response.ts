@@ -1,4 +1,4 @@
-import { AuthorMessage } from '@conversation/types'
+import { AuthorMessage, TopMember } from '@conversation/types'
 import { User, UserData, UserRes } from '@user/types'
 
 export type ToUserResponse = User & {
@@ -38,4 +38,14 @@ export const toAuthorMessage = (data: User): AuthorMessage => {
 
 export const toUserListResponse = (data: User[]): UserRes[] => {
   return data.map((item) => toUserResponse(item))
+}
+
+export const toTopMemberListResponse = (data: User[]): TopMember[] => {
+  console.log(data)
+  return data.map((item) => ({
+    user_id: item._id,
+    user_name: item.user_name,
+    avatar: item.avatar,
+    offline_at: (item?.offline_at as any) || null,
+  }))
 }

@@ -1,4 +1,4 @@
-import { MESSAGES_LIMIT, WebsocketEmitEvents } from '@common/constant'
+import { WebsocketEmitEvents } from '@common/constant'
 import { compareTwoObjectId } from '@common/helpers'
 import { ListRes, QueryCommonParams } from '@common/types'
 import { toListResponse } from '@common/utils'
@@ -9,7 +9,7 @@ import {
   UpdateRoomInfoDto,
 } from '@conversation/dtos'
 import { MessageRepository, RoomRepository } from '@conversation/repositories'
-import { Room, RoomDetailRes, RoomMemberRes } from '@conversation/types'
+import { Room, RoomMemberRes, RoomRes } from '@conversation/types'
 import {
   toMessageUnreadCount,
   toRoomMemberListResponse,
@@ -123,7 +123,7 @@ export class RoomService {
     return await this.roomRepository.findRooms(params)
   }
 
-  async getRoomDetail(room_id: string, user: User): Promise<RoomDetailRes> {
+  async getRoomDetail(room_id: string, user: User): Promise<RoomRes> {
     const room = (await this.roomRepository.findOne({
       $and: [{ _id: room_id }, { is_deleted: false }],
     })) as Room
@@ -132,40 +132,32 @@ export class RoomService {
       throw new HttpException('Không tìm thấy phòng chat', HttpStatus.NOT_FOUND)
     }
 
-    const members = await this.getMembersInRoom({
-      limit: 12,
-      offset: 0,
-      room,
-    })
+    const top_members = await this.userRepository.getTopMembers(
+      (room.members || [])?.map((item) => item.user_id)
+    )
 
-    const messages = await this.messageRepository.findMessagesByFilter({
-      limit: MESSAGES_LIMIT,
-      offset: 0,
-      user_id: user._id,
-      filter: { room_id: room_id, is_hidden: false },
-    })
-
-    let name: null | string = room?.name
+    let name: null | string
     let avatar = room?.avatar
-    if (room.type === 'single') {
-      const partner = members?.data?.find((item) => !compareTwoObjectId(item.id, user._id))
-      name = partner?.user_name || room.name || null
+    if (room.type === 'group') {
+      name = room?.name || top_members.map((item) => item.user_name)?.join(', ')
+    } else {
+      const partner = top_members?.find((item) => !compareTwoObjectId(item.user_id, user._id))
+      name = partner?.user_name || null
       avatar = partner?.avatar || null
     }
 
-    const offline_at = toRoomOfflineAt({ current_user_id: user._id, data: members.data })
+    const offline_at = toRoomOfflineAt({ current_user_id: user._id, data: top_members })
 
     return {
       id: room._id,
       type: room.type,
       name,
       avatar,
-      member_count: room.members?.length || 0,
       message_unread_count: 0,
-      offline_at,
-      members,
-      messages,
       is_online: !offline_at,
+      offline_at,
+      member_count: room.members?.length || 0,
+      top_members,
       last_message: null,
     }
   }
@@ -194,6 +186,8 @@ export class RoomService {
       throw new HttpException('Failed to soft delete room', HttpStatus.BAD_REQUEST)
     }
 
+    const users = await this.roomRepository.getSocketsFromRoom(room)
+
     // delete room record if does not contain messages
     if (room.messages?.length === 0) {
       await this.roomRepository.destroyRoom(room._id)
@@ -208,7 +202,7 @@ export class RoomService {
       )
     }
 
-    const users = await this.getSocketsFromRoom(room._id)
+    this.websocket.server.to(room._id).emit(WebsocketEmitEvents.DELETE_ROOM, { room_id: room._id })
     users.forEach((item) => {
       if (item?.socket_id && !compareTwoObjectId(item.user_id, user._id)) {
         this.websocket.server
@@ -221,12 +215,7 @@ export class RoomService {
   }
 
   async getSocketsFromRoom(params: string | Room): Promise<UserSocketId[]> {
-    const room = (params as Room)?._id ? (params as Room) : await this.getRoomById(params as string)
-    if (!room?.members?.length) return []
-
-    return await this.userRepository.getSocketsByUsers(
-      room.members.map((item) => item.user_id.toString())
-    )
+    return await this.roomRepository.getSocketsFromRoom(params)
   }
 
   async leaveRoom(room: Room, user_id: string) {

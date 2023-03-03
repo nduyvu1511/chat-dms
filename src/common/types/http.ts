@@ -4,3 +4,12 @@ export interface HttpResponseType<T> {
   status_code: number
   data: T
 }
+
+export interface INotificationContent {
+  contents?: object
+  headings?: object
+  subtitle?: object
+  template_id?: string
+  content_available?: boolean
+  mutable_content?: boolean
+}

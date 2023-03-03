@@ -1,29 +1,19 @@
 import { compareTwoObjectId } from '@common/helpers'
-import { toDefaultListResponse, toListResponse } from '@common/utils'
 import { User } from '@user/types'
-import { toUserListResponse } from '@user/utils'
 import * as _ from 'lodash'
-import {
-  Room,
-  RoomDetailPopulate,
-  RoomDetailRes,
-  RoomMemberRes,
-  RoomPopulate,
-  RoomRes,
-  ToRoomStatus,
-} from '../types'
-import { toLastMessageResponse, toMessageListResponse } from './message.response'
+import { Room, RoomMemberRes, RoomPopulate, RoomRes, TopMember, ToRoomStatus } from '../types'
+import { toLastMessageResponse } from './message.response'
 
 export const toRoomResponse = (data: RoomPopulate, user_id: string): RoomRes => {
   let name = ''
   let avatar: string | null = data?.avatar || null
 
-  if (data.type === 'single') {
+  if (data.type === 'group') {
+    name = data?.name || data.top_members.map((item) => item.user_name)?.join(', ')
+  } else {
     const partner = data.top_members?.find((item) => !compareTwoObjectId(item.user_id, user_id))
     name = partner?.user_name || ''
     avatar = partner?.avatar || null
-  } else if (data.type === 'group') {
-    name = data?.name || data.top_members.map((item) => item.user_name)?.join(', ')
   }
 
   const offline_at = data.top_members.filter(
@@ -48,15 +38,18 @@ export const toRoomOfflineAt = ({
   current_user_id,
   data,
 }: {
-  data: User[] | RoomMemberRes[]
+  data: User[] | RoomMemberRes[] | TopMember[]
   current_user_id: string
 }): string | null => {
   return (
     _.orderBy(
       [...data].filter(
         (item) =>
-          ((item as User)._id || (item as RoomMemberRes).id).toString() !==
-          current_user_id.toString()
+          (
+            (item as User)._id ||
+            (item as RoomMemberRes).id ||
+            (item as TopMember).user_id
+          ).toString() !== current_user_id.toString()
       ),
       (item) => item?.offline_at || '',
       ['desc']
@@ -79,37 +72,6 @@ export const toRoomStatus = ({ current_user, data }: ToRoomStatus): boolean => {
 
 export const toRoomListResponse = (data: RoomPopulate[], user_id: string): RoomRes[] => {
   return data.map((item) => toRoomResponse(item, user_id))
-}
-
-export const toRoomDetailResponse = (data: RoomDetailPopulate, user_id: string): RoomDetailRes => {
-  const offline_at = toRoomOfflineAt({
-    data: data.members as any,
-    current_user_id: user_id,
-  })
-
-  return {
-    id: data._id,
-    name: data?.name || null,
-    type: data.type,
-    avatar: data?.avatar || null,
-    last_message: null,
-    message_unread_count: 0,
-    member_count: data?.members?.data?.length || 0,
-    is_online: !offline_at,
-    offline_at,
-    members: data?.members?.data?.length
-      ? toListResponse({
-          ...data.members,
-          data: toUserListResponse(data.members.data),
-        })
-      : toDefaultListResponse(),
-    messages: data?.messages?.data?.length
-      ? toListResponse({
-          ...data.messages,
-          data: toMessageListResponse(data.messages.data, user_id),
-        })
-      : toDefaultListResponse(),
-  }
 }
 
 export const toRoomMemberOnlineCount = (params: { is_online: boolean }[]) => {

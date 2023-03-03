@@ -1,7 +1,7 @@
 import { BaseRepository } from '@common/repositories'
 import { toListResponse } from '@common/utils'
 import { GetRoomsQueryDto } from '@conversation/dtos'
-import { MessageDocument, RoomDocument } from '@conversation/models'
+import { RoomDocument } from '@conversation/models'
 import {
   AddMessageUnreadService,
   CreateGroupChat,
@@ -17,7 +17,7 @@ import { toRoomListResponse } from '@conversation/utils'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { UserDocument } from '@user/models'
-import { User } from '@user/types'
+import { User, UserSocketId } from '@user/types'
 import { ObjectId } from 'mongodb'
 import { FilterQuery, Model, PipelineStage, UpdateQuery } from 'mongoose'
 
@@ -82,6 +82,7 @@ export class RoomRepository extends BaseRepository<RoomDocument> {
                 user_name: '$user_name',
                 avatar: { $ifNull: ['$avatar', null] },
                 offline_at: '$offline_at',
+                phone: '$phone',
               },
             },
           ],
@@ -94,6 +95,9 @@ export class RoomRepository extends BaseRepository<RoomDocument> {
                 {
                   name: { $regex: keyword, $options: 'i' },
                 },
+                // {
+                //   phone: { $regex: keyword, $options: 'i' },
+                // },
                 {
                   'top_members.user_name': {
                     $regex: keyword,
@@ -349,6 +353,30 @@ export class RoomRepository extends BaseRepository<RoomDocument> {
     )
 
     return room
+  }
+
+  async getSocketsByUsers(user_ids: string[]): Promise<UserSocketId[]> {
+    const users: User[] = await this.userModel
+      .find({ _id: { $in: user_ids } })
+      .select(['socket_id', 'room_joineds', 'device_id', 'role'])
+      .lean()
+
+    if (!users?.length) return []
+
+    return users.map((item) => ({
+      socket_id: item.socket_id,
+      user_id: item._id,
+      device_id: item.device_id,
+      room_joineds: item?.room_joineds || [],
+      role: item.role,
+    }))
+  }
+
+  async getSocketsFromRoom(params: string | Room): Promise<UserSocketId[]> {
+    const room = (params as Room)?._id ? (params as Room) : await this.getRoomById(params as string)
+    if (!room?.members?.length) return []
+
+    return await this.getSocketsByUsers(room.members.map((item) => item.user_id.toString()))
   }
 
   async deleteRoomFromUsers(room_id: string, user_ids: string[]): Promise<boolean> {

@@ -28,6 +28,8 @@ export class AttachmentRepository extends BaseRepository<AttachmentDocument> {
       url: params.url,
       type: params.type,
       thumbnail_url: params.thumbnail_url,
+      height: params?.height || null,
+      width: params?.width || null,
     })
   }
 
@@ -58,17 +60,14 @@ export class AttachmentRepository extends BaseRepository<AttachmentDocument> {
         type === 'image'
           ? {
               crop: 'fill',
-              quality: 'auto',
-              width: 320,
-              height: 320,
+              transformation: {
+                quality: 30,
+              },
             }
           : {
-              quality: 30,
               transformation: {
                 crop: 'fill',
-                quality: 'auto',
-                width: 320,
-                height: 320,
+                quality: 30,
               },
             },
       ],
@@ -82,6 +81,8 @@ export class AttachmentRepository extends BaseRepository<AttachmentDocument> {
       public_id: res.public_id,
       url: res?.eager[0]?.secure_url || res.secure_url,
       thumbnail_url: res?.eager[1]?.secure_url || res.secure_url,
+      height: res?.eager[0]?.height || null,
+      width: res?.eager[0]?.width || null,
       type,
     }
   }

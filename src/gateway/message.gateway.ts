@@ -1,26 +1,32 @@
 import { WebsocketEmitEvents, WebsocketOnEvents } from '@common/constant'
 import { MessageService, RoomService } from '@conversation/services'
 import { MessageRes } from '@conversation/types'
-import { toMessageText } from '@conversation/utils'
 import { Logger, UseGuards } from '@nestjs/common'
 import {
   ConnectedSocket,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets'
 import { NotificationService } from '@notification'
-import { Socket } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import { WsGuard } from './ws.guard'
 
 @WebSocketGateway()
 export class MessageGateway {
+  private readonly logger = new Logger('socket')
   constructor(
     private roomService: RoomService,
     private messageService: MessageService,
     private notificationService: NotificationService
   ) {}
-  private readonly logger = new Logger('socket')
+
+  @WebSocketServer() server: Server
+
+  afterInit(server: Server) {
+    this.server = server
+  }
 
   @UseGuards(WsGuard)
   @SubscribeMessage(WebsocketOnEvents.SEND_MESSAGE)
@@ -36,27 +42,22 @@ export class MessageGateway {
       if (!partnerSocketIds?.length) return
 
       partnerSocketIds.forEach(async (item) => {
-        if (item.device_id) {
-          const message = toMessageText(payload)
-          this.notificationService.createNotification({
-            contents: { en: message },
-            priority: 10,
-            headings: { en: 'Bạn có tin nhắn mới' },
-            large_icon: payload.author_avatar,
-            include_player_ids: [item.device_id],
-            data: payload,
-          })
-        }
-
         if (item.socket_id) {
-          if (Array.from(socket.rooms)?.[1] !== payload.room_id) {
+          const room = Array.from(this.server.sockets.adapter.rooms.get(payload.room_id) || [])
+          if (!room.includes(item.socket_id)) {
+            if (item.device_id) {
+              await this.notificationService.createMessageNotification(item.device_id, payload)
+            }
             await this.roomService.addMessageUnreadToRoom(payload.id, item.user_id)
             socket
               .to(item.socket_id)
               .emit(WebsocketEmitEvents.RECEIVE_UNREAD_MESSAGE, { ...payload, is_author: false })
           }
         } else {
-          this.roomService.addMessageUnreadToRoom(payload.id, item.user_id)
+          if (item.device_id) {
+            await this.notificationService.createMessageNotification(item.device_id, payload)
+          }
+          await this.roomService.addMessageUnreadToRoom(payload.id, item.user_id)
         }
       })
     } catch (error) {

@@ -26,10 +26,8 @@ export class MessageController {
   constructor(private messageService: MessageService) {}
 
   @Post()
-  // @UseGuards(AuthGuard, UserGuard)
-  async sendMessage(@Req() request: Request, @Body() params: any) {
-    console.log(params)
-    return new HttpResponse({ msg: 'hello' })
+  @UseGuards(AuthGuard, UserGuard)
+  async sendMessage(@Req() request: Request, @Body() params: SendMessageDto) {
     try {
       const res = await this.messageService.sendMessage(
         plainToClass(SendMessageDto, params, {

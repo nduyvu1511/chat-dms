@@ -33,10 +33,10 @@ export class UserController {
 
   @ApiOkResponse({ type: UserResDto })
   @Get('/:id')
-  @UseGuards(AuthGuard, UserGuard)
-  async getUserInfoById(@Req() request: Request) {
-    const data = toUserResponse({ ...request._user, current_user_id: request._user._id.toString() })
-    return new HttpResponse(data)
+  @UseGuards(AuthGuard)
+  async getUserInfoById(@Param('id') id: string, @Req() request: Request) {
+    const user = await this.userService.getUserInfo(id)
+    return new HttpResponse(user)
   }
 
   @Patch('/')

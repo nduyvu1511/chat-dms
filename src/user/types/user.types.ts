@@ -30,6 +30,12 @@ export type UserRes = Pick<User, 'offline_at' | 'role' | 'phone' | 'user_name'> 
   message_unread_count?: number
 }
 
+export interface MentionUserRes {
+  id: string
+  name: string
+  avatar: string
+}
+
 export type UserData = UserRes & {
   user_chatted_with_ids: string[]
   room_joined_ids: string[]
@@ -148,13 +154,6 @@ export interface UserSocketId {
 export interface RequestRefreshToken {
   refresh_token: string
   user: User
-}
-
-export interface TopMember {
-  user_id: string
-  user_avatar: string
-  user_name: string
-  is_online: boolean
 }
 
 export type FriendStatusRes = {

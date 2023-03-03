@@ -2,11 +2,12 @@ import { SELECT_USER } from '@common/constant'
 import { BaseRepository } from '@common/repositories'
 import { ListRes } from '@common/types'
 import { toListResponse } from '@common/utils'
+import { TopMember } from '@conversation/types'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { TokenDocument, UserDocument } from '@user/models'
-import { GetUserByFilter, User, UserRes, UserSocketId } from '@user/types'
-import { toUserListResponse } from '@user/utils'
+import { GetUserByFilter, MentionUserRes, User, UserRes, UserSocketId } from '@user/types'
+import { toTopMemberListResponse, toUserListResponse } from '@user/utils'
 import { Model } from 'mongoose'
 
 @Injectable()
@@ -41,6 +42,15 @@ export class UserRepository extends BaseRepository<UserDocument> {
 
   async getUsersByUserIds(user_ids: number[]): Promise<User[]> {
     return await this.userModel.find({ user_id: { $in: user_ids } }).lean()
+  }
+
+  async getTopMembers(ids: string[]): Promise<TopMember[]> {
+    const members: User[] = await this.userModel
+      .find({ _id: { $in: ids } })
+      .sort({ offline_at: -1 })
+      .lean()
+
+    return toTopMemberListResponse(members)
   }
 
   async removeSocket(socket_id: string) {

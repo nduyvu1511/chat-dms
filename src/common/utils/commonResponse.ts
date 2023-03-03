@@ -7,6 +7,8 @@ export const toAttachmentResponse = (params: Attachment): AttachmentRes => {
     thumbnail_url: params?.thumbnail_url || null,
     url: params?.url,
     type: params?.type,
+    height: params?.height || null,
+    width: params?.width || null,
   }
 }
 
@@ -16,7 +18,7 @@ export const toAttachmentListResponse = (params: Attachment[]): AttachmentRes[] 
 
 export const toTagResponse = (params: Tag): TagRes => {
   return {
-    tag_id: params._id,
+    id: params._id,
     text: params.text,
   }
 }

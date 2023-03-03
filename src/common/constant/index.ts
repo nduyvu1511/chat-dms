@@ -51,7 +51,7 @@ export enum WebsocketEmitEvents {
   FRIEND_LOGOUT = 'friend_logout',
   LOGIN = 'login',
   FRIEND_LOGIN = 'friend_login',
-  READ_ADD_MESSAGE = 'read_all_message',
+  READ_ALL_MESSAGE = 'read_all_message',
   PARTNER_READ_ALL_MESSAGE = 'partner_read_all_message',
   RECEIVE_MESSAGE = 'receive_message',
   RECEIVE_UNREAD_MESSAGE = 'receive_unread_message',

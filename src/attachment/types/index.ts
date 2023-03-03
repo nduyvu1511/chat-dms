@@ -6,6 +6,8 @@ export interface UploadResourceRes {
   public_id: string
   asset_id: string
   type: AttachmentType
+  width: number
+  height: number
 }
 
 export interface Attachment {
@@ -13,6 +15,8 @@ export interface Attachment {
   url: string
   thumbnail_url?: string
   type: AttachmentType
+  height: number
+  width: number
   public_id: string
   asset_id: string
   created_at: Date
@@ -42,7 +46,7 @@ export interface UploadMultipleImage extends UploadMultipleVideo {
 
 type AttachmentType = 'image' | 'video'
 
-export type AttachmentRes = Pick<Attachment, 'url' | 'type'> & {
+export type AttachmentRes = Pick<Attachment, 'url' | 'type' | 'width' | 'height'> & {
   id: string
   thumbnail_url: string | null
 }

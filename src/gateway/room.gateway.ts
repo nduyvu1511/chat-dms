@@ -37,7 +37,7 @@ export class RoomGateway {
       if (!room_id) {
         throw new WsException('Missing room id')
       }
-
+      console.log('new client joined room with id: ', socket.id)
       socket.join(room_id)
 
       const room = await this.roomService.getRoomById(room_id)
@@ -45,7 +45,7 @@ export class RoomGateway {
 
       const user = room.members?.find((item) => compareTwoObjectId(item.user_id, user_id))
       if (user?.message_unreads?.length) {
-        socket.emit(WebsocketEmitEvents.READ_ADD_MESSAGE, { room_id })
+        socket.emit(WebsocketEmitEvents.READ_ALL_MESSAGE, { room_id })
         this.roomService.deleteAllMsgUnreadOfUserInRoom(room_id, user.user_id)
         this.messageService.confirmReadAllMessage(room_id, user.user_id)
 

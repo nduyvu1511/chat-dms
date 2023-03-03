@@ -46,7 +46,7 @@ export interface Tag {
 }
 
 export interface TagRes {
-  tag_id: ObjectId
+  id: ObjectId
   text: string
 }
 
