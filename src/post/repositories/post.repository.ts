@@ -62,6 +62,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
   }: GetPostsQueryDto): Promise<ListRes<PostRes[]>> {
     const query: FilterQuery<Post> = { $and: [{ active: true }] }
 
+    console.log('query: ', { category_id, keyword, limit, offset })
+
     if (category_id) {
       query.$and.push({ category: category_id })
     }
@@ -72,7 +74,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
       })
     }
 
-    console.log({ query })
+    console.log('----')
+    console.log(query)
 
     const data = await this.postModel
       .find(query)
@@ -81,18 +84,20 @@ export class PostRepository extends BaseRepository<PostDocument> {
         model: 'User',
       })
       .populate({
-        path: 'Category',
-        model: 'category',
+        path: 'category',
+        model: 'Category',
       })
       .populate({
-        path: 'Attachment',
-        model: 'thumbnail',
+        path: 'thumbnail',
+        model: 'Attachment',
       })
       .limit(limit)
       .skip(offset)
       .sort({ created_at: -1 })
 
     const total = await this.postModel.countDocuments(query)
+
+    console.log('data: ', data)
 
     return toListResponse({
       data,

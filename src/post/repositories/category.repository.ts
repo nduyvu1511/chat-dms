@@ -55,6 +55,8 @@ export class CategoryRepository extends BaseRepository<CategoryDocument> {
       })
     }
 
+    console.log('cate query: ', query)
+
     const data = await this.categoryModel
       .find(query)
       .populate({

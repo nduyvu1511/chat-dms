@@ -11,7 +11,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   app.setGlobalPrefix('api')
   app.useGlobalPipes(new ValidationPipe({ skipMissingProperties: true }))
-  app.enableCors({ origin: true })
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    credentials: true,
+  })
   app.useWebSocketAdapter(new SocketIoAdapter(app))
 
   const configService: ConfigService = app.get(ConfigService)

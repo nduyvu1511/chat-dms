@@ -26,7 +26,7 @@ export class BaseRepository<T extends Document> {
 
   async create(doc: unknown): Promise<T> {
     const createdEntity = new this.model(doc)
-    return createdEntity.save()
+    return (await createdEntity.save()).toObject()
   }
 
   async findOneAndUpdate(

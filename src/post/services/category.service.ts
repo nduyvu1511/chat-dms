@@ -36,14 +36,14 @@ export class CategoryService {
 
   async createCategory(params: CreateCategoryDto) {
     const image = await this.findAttachment(params.attachment_id)
-    const parent_category = await this.findCategory(params.parent_id)
+    const parent_category = params?.parent_id ? await this.findCategory(params.parent_id) : null
 
     const category = await this.categoryRepository.create({
       slug: createSlug(params.slug),
       desc: params?.desc || null,
       name: params.name,
       image: image._id,
-      parent_id: parent_category._id,
+      parent_id: parent_category?._id || null,
     })
 
     return toCategoryResponse({ ...category, image } as CategoryPopulate)
@@ -92,7 +92,7 @@ export class CategoryService {
   }
 
   async getCategories(params: GetCategoriesQueryDto) {
-    return await this.getCategories(params)
+    return await this.categoryRepository.getCategories(params)
   }
 
   async getOneCategory(id: string) {
