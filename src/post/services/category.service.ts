@@ -58,7 +58,7 @@ export class CategoryService {
       )
     }
 
-    await this.categoryRepository.findOneAndDelete({ catetory: id })
+    await this.categoryRepository.findOneAndDelete({ _id: id })
     return { category_id: id }
   }
 
