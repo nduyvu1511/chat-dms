@@ -205,6 +205,16 @@ export class RoomRepository extends BaseRepository<RoomDocument> {
     ])
     const total = keyword ? data.length : await this.roomModel.countDocuments(filter)
 
+    console.log(
+      'test room res: ',
+      toListResponse({
+        limit,
+        offset,
+        total,
+        data: toRoomListResponse(data, user._id),
+      })
+    )
+
     return toListResponse({
       limit,
       offset,

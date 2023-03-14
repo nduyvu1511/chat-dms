@@ -71,7 +71,7 @@ export class PostService {
   }
 
   async updatePost(id: string, params: UpdatePostDto) {
-    return await this.postRepository.updatePost(id, params)
+    return await this.postRepository.findOneAndUpdate({ _id: id }, params)
   }
 
   async getPosts(params: GetPostsQueryDto) {

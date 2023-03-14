@@ -35,14 +35,14 @@ export class CategoryService {
   }
 
   async createCategory(params: CreateCategoryDto) {
-    const image = await this.findAttachment(params.attachment_id)
+    const image = params?.attachment_id ? await this.findAttachment(params.attachment_id) : null
     const parent_category = params?.parent_id ? await this.findCategory(params.parent_id) : null
 
     const category = await this.categoryRepository.create({
       slug: createSlug(params.slug),
       desc: params?.desc || null,
       name: params.name,
-      image: image._id,
+      image: image?._id || null,
       parent_id: parent_category?._id || null,
     })
 
@@ -87,7 +87,7 @@ export class CategoryService {
       )
     }
 
-    await this.categoryRepository.findOneAndUpdate({ catetory: id }, params)
+    await this.categoryRepository.findOneAndUpdate({ _id: id }, params)
     return await this.categoryRepository.getCategory(id)
   }
 
