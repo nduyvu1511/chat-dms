@@ -5,7 +5,6 @@
   "author": "Nduyvu",
   "private": true,
   "license": "UNLICENSED",
-  "main": "src/main.ts",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
