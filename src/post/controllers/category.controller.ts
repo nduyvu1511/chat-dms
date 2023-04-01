@@ -1,3 +1,4 @@
+import { HttpResponse } from '@common/utils'
 import {
   Body,
   Controller,
@@ -38,9 +39,10 @@ export class CategoryController {
   @Get()
   async getCategories(@Query() params: GetCategoriesQueryDto) {
     try {
-      return this.categoryService.getCategories(
+      const res = await this.categoryService.getCategories(
         plainToClass(GetCategoriesQueryDto, params, { excludeExtraneousValues: true })
       )
+      return new HttpResponse(res)
     } catch (error) {
       throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
     }
@@ -48,7 +50,7 @@ export class CategoryController {
 
   @Patch(':id')
   @UseGuards(AuthGuard)
-  async updateCategory(@Param('id') id: string, @Query() params: UpdateCategoryDto) {
+  async updateCategory(@Param('id') id: string, @Body() params: UpdateCategoryDto) {
     try {
       return this.categoryService.updateCategory(
         id,

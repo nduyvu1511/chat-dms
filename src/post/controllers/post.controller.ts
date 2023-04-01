@@ -1,5 +1,4 @@
 import { HttpResponse } from '@common/utils'
-import { SendMessageDto } from '@conversation/dtos'
 import {
   Body,
   Controller,
@@ -75,7 +74,7 @@ export class PostController {
   @UseGuards(AuthGuard)
   async deletePost(@Param('id') id: string, @Query() params: UpdatePostDto) {
     try {
-      const res = await this.postService.updatePost(id, params)
+      const res = await this.postService.deletePost(id)
       return new HttpResponse(res)
     } catch (error) {
       throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
@@ -95,7 +94,7 @@ export class PostController {
 
   @Patch(':id')
   @UseGuards(AuthGuard)
-  async updatePost(@Param('id') id: string, @Query() params: UpdatePostDto) {
+  async updatePost(@Param('id') id: string, @Body() params: UpdatePostDto) {
     try {
       const res = await this.postService.updatePost(id, params)
       return new HttpResponse(res)

@@ -1,13 +1,12 @@
 import { BaseRepository } from '@common/repositories'
 import { ListRes } from '@common/types'
 import { toListResponse } from '@common/utils'
-import { RoomPopulate } from '@conversation/types'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { GetPostsQueryDto, UpdatePostDto } from '@post/dtos'
 import { CategoryDocument, PostDocument } from '@post/models'
-import { Post, PostPopulate, PostRes } from '@post/types'
-import { toPostListResponse, toPostResponse } from '@post/utils'
+import { Post, PostRes } from '@post/types'
+import { toPostResponse } from '@post/utils'
 import { FilterQuery, Model } from 'mongoose'
 
 @Injectable()
@@ -29,10 +28,6 @@ export class PostRepository extends BaseRepository<PostDocument> {
     return this.postModel.findByIdAndUpdate(id, { $set: { active: true } })
   }
 
-  async updatePost(id: string, post: UpdatePostDto) {
-    return this.postModel.findByIdAndUpdate(id, post, { new: true })
-  }
-
   async getPostByQuery(filter: FilterQuery<Post>): Promise<PostRes | null> {
     const data = await this.postModel
       .findOne(filter)
@@ -41,12 +36,13 @@ export class PostRepository extends BaseRepository<PostDocument> {
         model: 'User',
       })
       .populate({
-        path: 'Category',
-        model: 'category',
+        path: 'category',
+        model: 'Category',
+        options: { strictPopulate: false },
       })
       .populate({
-        path: 'Attachment',
-        model: 'thumbnail',
+        path: 'thumbnail',
+        model: 'Attachment',
       })
 
     if (!data?._id) return null
@@ -62,6 +58,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
   }: GetPostsQueryDto): Promise<ListRes<PostRes[]>> {
     const query: FilterQuery<Post> = { $and: [{ active: true }] }
 
+    console.log('query: ', { category_id, keyword, limit, offset })
+
     if (category_id) {
       query.$and.push({ category: category_id })
     }
@@ -72,7 +70,8 @@ export class PostRepository extends BaseRepository<PostDocument> {
       })
     }
 
-    console.log({ query })
+    console.log('----')
+    console.log(query)
 
     const data = await this.postModel
       .find(query)
@@ -81,18 +80,20 @@ export class PostRepository extends BaseRepository<PostDocument> {
         model: 'User',
       })
       .populate({
-        path: 'Category',
-        model: 'category',
+        path: 'category',
+        model: 'Category',
       })
       .populate({
-        path: 'Attachment',
-        model: 'thumbnail',
+        path: 'thumbnail',
+        model: 'Attachment',
       })
       .limit(limit)
       .skip(offset)
       .sort({ created_at: -1 })
 
     const total = await this.postModel.countDocuments(query)
+
+    console.log('data: ', data)
 
     return toListResponse({
       data,

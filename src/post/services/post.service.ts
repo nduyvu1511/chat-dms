@@ -48,8 +48,8 @@ export class PostService {
     const thumbnail = (await this.getAttachment(params.attachment_id)) as Attachment
 
     const post = await this.postRepository.create({
-      author_id: user._id,
-      category_id: params.category_id,
+      author: user._id,
+      category: params.category_id,
       content: params.content,
       short_content: params.short_content,
       slug: params.slug,
@@ -71,7 +71,7 @@ export class PostService {
   }
 
   async updatePost(id: string, params: UpdatePostDto) {
-    return await this.postRepository.updatePost(id, params)
+    return await this.postRepository.findOneAndUpdate({ _id: id }, params)
   }
 
   async getPosts(params: GetPostsQueryDto) {
