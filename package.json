@@ -5,7 +5,7 @@
   "author": "Nduyvu",
   "private": true,
   "license": "UNLICENSED",
-  "engines": { "node": "16.x" },
+  "engines": { "node": "18.x" },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
