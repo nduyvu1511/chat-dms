@@ -4,6 +4,14 @@ import { UserRole } from '@user/types'
 import { Expose } from 'class-transformer'
 import { IsEnum, IsNotEmpty, IsNumber, IsString, Matches } from 'class-validator'
 
+export class GenerateTokenDto {
+  @ApiProperty({ description: 'Lấy ID từ partner_id của Odoo server, sau đó dùng jwt để encode' })
+  @Expose()
+  @IsNotEmpty()
+  @IsString()
+  token: string
+}
+
 export class CreateUserDto {
   @ApiProperty({ description: 'Là ID từ server Odoo' })
   @Expose()

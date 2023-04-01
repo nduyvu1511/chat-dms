@@ -1,7 +1,7 @@
 import { compareSyncPassword, hashPassword } from '@common/helpers'
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { ChangePasswordDto, CreatePasswordDto, CreateUserDto, LoginDto } from '@user/dtos'
+import { ChangePasswordDto, CreatePasswordDto, CreateUserDto, GenerateTokenDto, LoginDto } from '@user/dtos'
 import { UserRepository } from '@user/repositories'
 import { TokenRes, User } from '@user/types'
 import { toUserResponse } from '@user/utils/user.response'
@@ -13,7 +13,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     private readonly userRepository: UserRepository
-  ) {}
+  ) { }
 
   async register(userDto: CreateUserDto) {
     try {
@@ -30,6 +30,33 @@ export class AuthService {
       throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
     }
   }
+
+  async generateTokenFromId(params: GenerateTokenDto) {
+    try {
+      const tokenData: any = this.jwtService.verify(params.token, { secret: process.env.USER_ID_SECRET_KEY })
+      if (!tokenData?.user_id) {
+        throw new HttpException('Can not decode data from token', HttpStatus.BAD_REQUEST)
+      }
+      const user = await this.userRepository.findOne({ user_id: +tokenData?.user_id }) as User
+      if (!user) {
+        throw new HttpException('User not found, can not generate token', HttpStatus.BAD_REQUEST)
+      }
+
+      const access_token = await this.generateToken(user)
+      const refresh_token = await this.generateRefreshToken(user)
+
+      return {
+        ...toUserResponse(user),
+        access_token,
+        refresh_token,
+      }
+
+
+    } catch (error) {
+      throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
 
   async login(loginUserDto: LoginDto) {
     try {

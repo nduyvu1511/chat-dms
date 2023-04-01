@@ -15,6 +15,7 @@ import {
   ChangePasswordDto,
   CreatePasswordDto,
   CreateUserDto,
+  GenerateTokenDto,
   HasPasswordResDto,
   LoginDto,
   LoginResDto,
@@ -27,7 +28,7 @@ import { AuthService } from '../services/auth.service'
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @ApiOkResponse({
@@ -39,6 +40,19 @@ export class AuthController {
         plainToClass(CreateUserDto, createUserDto, { excludeExtraneousValues: true })
       )
       return new HttpResponse(data, 'Đăng ký thành công')
+    } catch (error) {
+      throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @Post('generate_token')
+  @ApiOkResponse({ type: LoginResDto })
+  async generateToken(@Body() generateTokenDto: GenerateTokenDto) {
+    try {
+      const data = await this.authService.generateTokenFromId(
+        plainToClass(GenerateTokenDto, generateTokenDto, { excludeExtraneousValues: true })
+      )
+      return new HttpResponse(data, 'Tạo token thành công')
     } catch (error) {
       throw new HttpException(error?.message, HttpStatus.BAD_REQUEST)
     }
